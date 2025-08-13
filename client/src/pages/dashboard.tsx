@@ -44,7 +44,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
+    <div className="flex h-screen overflow-hidden bg-surface dark:bg-surface">
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -57,7 +57,7 @@ export default function Dashboard() {
           {/* Charts and AI Insights Row */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Spending Chart Placeholder */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <div className="bg-white dark:bg-card rounded-lg shadow-sm border border-gray-100 dark:border-border">
               <div className="p-6 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Gastos por Categoria</h3>

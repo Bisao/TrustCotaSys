@@ -1,8 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 
+interface DashboardStats {
+  monthlySpending?: number;
+  activeQuotations?: number;
+  savings?: number;
+  activeSuppliers?: number;
+  pendingApprovals?: number;
+}
+
 export default function StatsCards() {
-  const { data: stats = {}, isLoading } = useQuery({
+  const { data: stats = {}, isLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
   });
 
@@ -69,7 +77,7 @@ export default function StatsCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {statsData.map((stat, index) => (
-        <Card key={index} className="bg-white rounded-lg shadow-sm border border-gray-100">
+        <Card key={index} className="bg-white dark:bg-card rounded-lg shadow-sm border border-gray-100 dark:border-border">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>

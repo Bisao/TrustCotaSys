@@ -7,7 +7,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-surface dark:bg-surface flex flex-col items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">
@@ -16,8 +16,8 @@ export default function Landing() {
               <span className="material-icons text-white text-2xl">shopping_cart</span>
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-gray-900">TrustCota Sys</h1>
-              <p className="text-lg text-gray-600">Sistema de Compras e Cotações</p>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">TrustCota Sys</h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300">Sistema de Compras e Cotações</p>
             </div>
           </div>
           

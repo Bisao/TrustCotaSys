@@ -102,7 +102,7 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden lg:flex lg:flex-shrink-0">
-      <div className="flex flex-col w-64 bg-white border-r border-gray-200">
+      <div className="flex flex-col w-64 bg-white dark:bg-sidebar border-r border-gray-200 dark:border-sidebar-border">
         {/* Logo Header */}
         <div className="flex items-center h-16 px-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
