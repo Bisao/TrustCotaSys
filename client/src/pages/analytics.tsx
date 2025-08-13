@@ -27,12 +27,12 @@ export default function Analytics() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: stats } = useQuery({
+  const { data: stats = {} } = useQuery({
     queryKey: ["/api/dashboard/stats"],
     enabled: isAuthenticated,
   });
 
-  const { data: insights } = useQuery({
+  const { data: insights = [] } = useQuery({
     queryKey: ["/api/dashboard/ai-insights"],
     enabled: isAuthenticated,
   });

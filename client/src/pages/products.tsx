@@ -58,12 +58,12 @@ export default function Products() {
     },
   });
 
-  const { data: products, isLoading: isLoadingProducts } = useQuery({
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ["/api/products"],
     enabled: isAuthenticated,
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
     enabled: isAuthenticated,
   });

@@ -61,7 +61,7 @@ export default function Quotations() {
     },
   });
 
-  const { data: quotationRequests, isLoading: isLoadingRequests } = useQuery({
+  const { data: quotationRequests = [], isLoading: isLoadingRequests } = useQuery({
     queryKey: ["/api/quotation-requests"],
     enabled: isAuthenticated,
   });

@@ -113,15 +113,13 @@ export default function Sidebar() {
         {/* Navigation Menu */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {/* Dashboard Link */}
-          <Link href="/">
-            <a className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+          <Link href="/" className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
               isActiveLink("/") && location === "/"
                 ? "text-primary bg-blue-50"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
             }`}>
               <span className="material-icons mr-3 text-sm">dashboard</span>
               Dashboard
-            </a>
           </Link>
 
           {/* Grouped Navigation Items */}
@@ -134,15 +132,13 @@ export default function Sidebar() {
               </div>
               
               {items.map((item) => (
-                <Link key={item.path} href={item.path}>
-                  <a className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
+                <Link key={item.path} href={item.path} className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg ${
                     isActiveLink(item.path)
                       ? "text-primary bg-blue-50"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}>
                     <span className="material-icons mr-3 text-sm">{item.icon}</span>
                     {item.label}
-                  </a>
                 </Link>
               ))}
             </div>

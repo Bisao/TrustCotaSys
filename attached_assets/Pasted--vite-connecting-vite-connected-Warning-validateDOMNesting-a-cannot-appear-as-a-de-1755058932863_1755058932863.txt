@@ -1,0 +1,39 @@
+[vite] connecting...
+[vite] connected.
+Warning: validateDOMNesting(...): <a> cannot appear as a descendant of &lt;a&gt;.
+    at a
+    at a
+    at https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=39f7e704:337:18
+    at nav
+    at div
+    at aside
+    at Sidebar (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/src/components/layout/sidebar.tsx:95:22)
+    at div
+    at Dashboard (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/src/pages/dashboard.tsx:30:21)
+    at Route (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=39f7e704:323:16)
+    at Switch (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=39f7e704:379:17)
+    at Router (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/src/App.tsx?v=mrw7xBEEhIxE4W_VYrkqr:33:42)
+    at Provider (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-M3NVYRND.js?v=39f7e704:48:15)
+    at TooltipProvider (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=39f7e704:58:5)
+    at QueryClientProvider (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=39f7e704:2805:3)
+    at App
+at a
+at a
+at https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=39f7e704:337:18
+at nav
+at div
+at aside
+at Sidebar (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/src/components/layout/sidebar.tsx:95:22)
+at div
+at Dashboard (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/src/pages/dashboard.tsx:30:21)
+at Route (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=39f7e704:323:16)
+at Switch (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=39f7e704:379:17)
+at Router (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/src/App.tsx?v=mrw7xBEEhIxE4W_VYrkqr:33:42)
+at Provider (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-M3NVYRND.js?v=39f7e704:48:15)
+at TooltipProvider (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=39f7e704:58:5)
+at QueryClientProvider (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=39f7e704:2805:3)
+at App
+at t.value (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://abfd785d-a2a1-48f5-8e75-4a92f37cd54c-00-1nucbrlpsoxcr.janeway.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
