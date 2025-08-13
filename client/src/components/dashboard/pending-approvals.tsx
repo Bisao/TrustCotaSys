@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 export default function PendingApprovals() {
-  const { data: approvals, isLoading } = useQuery({
+  const { data: approvals = [], isLoading } = useQuery({
     queryKey: ["/api/dashboard/pending-approvals"],
   });
 

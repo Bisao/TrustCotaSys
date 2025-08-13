@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 
 export default function RecentQuotations() {
-  const { data: quotations, isLoading } = useQuery({
+  const { data: quotations = [], isLoading } = useQuery({
     queryKey: ["/api/dashboard/recent-quotations"],
   });
 

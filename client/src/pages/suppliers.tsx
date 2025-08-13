@@ -98,11 +98,11 @@ export default function Suppliers() {
     },
   });
 
-  const filteredSuppliers = suppliers?.filter((supplier: any) =>
-    supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredSuppliers = (suppliers || []).filter((supplier: any) =>
+    supplier.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     supplier.cnpj?.includes(searchQuery) ||
     supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  );
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -217,7 +217,7 @@ export default function Suppliers() {
                           <FormItem>
                             <FormLabel>Telefone</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -232,7 +232,7 @@ export default function Suppliers() {
                         <FormItem>
                           <FormLabel>Pessoa de Contato</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -246,7 +246,7 @@ export default function Suppliers() {
                         <FormItem>
                           <FormLabel>Endereço</FormLabel>
                           <FormControl>
-                            <Textarea {...field} />
+                            <Textarea {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -260,7 +260,7 @@ export default function Suppliers() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || "ativo"}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -286,7 +286,7 @@ export default function Suppliers() {
                         <FormItem>
                           <FormLabel>Observações</FormLabel>
                           <FormControl>
-                            <Textarea {...field} />
+                            <Textarea {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

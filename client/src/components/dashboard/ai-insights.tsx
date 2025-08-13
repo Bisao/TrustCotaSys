@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default function AiInsights() {
-  const { data: insights, isLoading } = useQuery({
+  const { data: insights = [], isLoading } = useQuery({
     queryKey: ["/api/dashboard/ai-insights"],
   });
 

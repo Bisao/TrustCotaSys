@@ -337,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           entityType: 'quotation_request',
           entityId: request.id,
           analysis,
-          confidence: 0.85,
+          confidence: "0.85",
         });
       } catch (aiError) {
         console.error("Error generating AI analysis:", aiError);

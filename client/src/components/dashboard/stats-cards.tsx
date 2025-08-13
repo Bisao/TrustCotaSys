@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function StatsCards() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats = {}, isLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
   });
 
