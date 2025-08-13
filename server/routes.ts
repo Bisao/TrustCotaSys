@@ -586,26 +586,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No supplier quotation selected" });
       }
 
-      // Generate order number
-      const today = new Date();
-      const yearMonth = today.getFullYear().toString() + (today.getMonth() + 1).toString().padStart(2, '0');
-      const [lastOrder] = await db
-        .select({ orderNumber: purchaseOrders.orderNumber })
-        .from(purchaseOrders)
-        .where(like(purchaseOrders.orderNumber, `PO-${yearMonth}%`))
-        .orderBy(desc(purchaseOrders.orderNumber))
-        .limit(1);
-
-      let sequence = 1;
-      if (lastOrder) {
-        const lastSequence = parseInt(lastOrder.orderNumber.split('-')[2]);
-        sequence = lastSequence + 1;
-      }
-
-      const orderNumber = `PO-${yearMonth}-${sequence.toString().padStart(3, '0')}`;
-
       const purchaseOrder = await storage.createPurchaseOrder({
-        orderNumber,
         quotationRequestId: req.params.id,
         supplierId: selectedQuotation.supplierId,
         totalAmount: selectedQuotation.totalAmount,
@@ -622,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         action: 'create',
         entityType: 'purchase_order',
         entityId: purchaseOrder.id,
-        changes: { orderNumber, supplierId: selectedQuotation.supplierId },
+        changes: { orderNumber: purchaseOrder.orderNumber, supplierId: selectedQuotation.supplierId },
       });
 
       res.status(201).json(purchaseOrder);
