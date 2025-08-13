@@ -116,8 +116,8 @@ export interface IStorage {
     pendingApprovals: number;
   }>;
 
-  // Recent activities
-  getRecentQuotations(limit?: number): Promise<any[]>;
+  // Recent activities  
+  getRecentQuotations(userId: string, limit?: number): Promise<any[]>;
   getPendingApprovals(userId: string, limit?: number): Promise<any[]>;
 }
 
@@ -874,10 +874,32 @@ class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  // Stub implementations for remaining methods
-  async getQuotationRequestItems(requestId: string): Promise<QuotationRequestItem[]> { return []; }
+  // Missing interface method implementation
+  async getRecentQuotations(userId: string, limit: number = 5): Promise<any[]> {
+    return Array.from(this.quotationRequests.values())
+      .slice(0, limit)
+      .map(req => ({
+        id: req.id,
+        requestNumber: req.requestNumber,
+        title: req.title,
+        status: req.status,
+        totalBudget: req.totalBudget,
+        createdAt: req.createdAt,
+        requesterName: "Demo User",
+      }));
+  }
+
+  // Quotation Request Item operations with proper typing
+  async getQuotationRequestItems(requestId: string): Promise<QuotationRequestItem[]> { 
+    return Array.from(this.quotationRequestItems.values()).filter(item => item.quotationRequestId === requestId);
+  }
+  
   async createQuotationRequestItem(item: InsertQuotationRequestItem): Promise<QuotationRequestItem> { 
-    const newItem: QuotationRequestItem = { ...item, id: this.generateId() };
+    const newItem: QuotationRequestItem = { 
+      ...item, 
+      id: this.generateId(),
+      createdAt: new Date()
+    };
     this.quotationRequestItems.set(newItem.id, newItem);
     return newItem;
   }
@@ -1021,5 +1043,5 @@ class MemStorage implements IStorage {
 }
 
 // Use appropriate storage based on database availability
-import { db } from "./db";
-export const storage: IStorage = db ? new DatabaseStorage() : new MemStorage();
+import { db as database } from "./db";
+export const storage: IStorage = database ? new DatabaseStorage() : new MemStorage();

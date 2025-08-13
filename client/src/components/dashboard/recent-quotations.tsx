@@ -93,7 +93,7 @@ export default function RecentQuotations() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {quotations && quotations.length > 0 ? (
+              {quotations && Array.isArray(quotations) && quotations.length > 0 ? (
                 quotations.map((quotation: any) => (
                   <tr key={quotation.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

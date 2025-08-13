@@ -253,7 +253,7 @@ class OpenAIService {
 
       Respond in JSON format with fields: evaluationCriteria, keyQuestions, redFlags, negotiationStrategies`;
 
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
@@ -290,7 +290,7 @@ class OpenAIService {
 
       Respond in JSON format with fields: trendAnalysis, anomalies, forecast, recommendedActions`;
 
-      const response = await openai.chat.completions.create({
+      const response = await openai!.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {

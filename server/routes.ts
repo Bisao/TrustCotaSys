@@ -37,9 +37,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/dashboard/recent-quotations', isAuthenticated, async (req, res) => {
+  app.get('/api/dashboard/recent-quotations', isAuthenticated, async (req: any, res) => {
     try {
-      const quotations = await storage.getRecentQuotations(5);
+      const userId = req.user.claims.sub;
+      const quotations = await storage.getRecentQuotations(userId, 5);
       res.json(quotations);
     } catch (error) {
       console.error("Error fetching recent quotations:", error);
