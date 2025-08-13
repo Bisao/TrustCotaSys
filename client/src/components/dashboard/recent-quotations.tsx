@@ -76,8 +76,8 @@ export default function RecentQuotations() {
       <CardHeader className="p-6 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-gray-900">Cotações Recentes</CardTitle>
-          <Link href="/quotations">
-            <a className="text-sm text-primary hover:text-blue-700 font-medium">Ver todas</a>
+          <Link href="/quotations" className="text-sm text-primary hover:text-blue-700 font-medium">
+            Ver todas
           </Link>
         </div>
       </CardHeader>

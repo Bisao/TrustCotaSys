@@ -1,0 +1,53 @@
+[vite] connecting...
+[vite] connected.
+Warning: validateDOMNesting(...): <a> cannot appear as a descendant of &lt;a&gt;.
+    at a
+    at a
+    at https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3da4159b:337:18
+    at div
+    at div
+    at _c3 (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/ui/card.tsx:45:12)
+    at div
+    at _c (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at RecentQuotations (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/dashboard/recent-quotations.tsx:24:48)
+    at div
+    at div
+    at main
+    at div
+    at div
+    at Dashboard (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/pages/dashboard.tsx:30:21)
+    at Route (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3da4159b:323:16)
+    at Switch (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3da4159b:379:17)
+    at Router (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/App.tsx?v=ux0fs04PVP6e6hJ1N8VJr:38:42)
+    at Provider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=3da4159b:38:15)
+    at TooltipProvider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3da4159b:63:5)
+    at ThemeProvider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3da4159b:2805:3)
+    at App
+at a
+at a
+at https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3da4159b:337:18
+at div
+at div
+at _c3 (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/ui/card.tsx:45:12)
+at div
+at _c (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/ui/card.tsx:20:11)
+at RecentQuotations (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/dashboard/recent-quotations.tsx:24:48)
+at div
+at div
+at main
+at div
+at div
+at Dashboard (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/pages/dashboard.tsx:30:21)
+at Route (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3da4159b:323:16)
+at Switch (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=3da4159b:379:17)
+at Router (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/App.tsx?v=ux0fs04PVP6e6hJ1N8VJr:38:42)
+at Provider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5AJU3CG7.js?v=3da4159b:38:15)
+at TooltipProvider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=3da4159b:63:5)
+at ThemeProvider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/src/components/theme-provider.tsx:25:3)
+at QueryClientProvider (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=3da4159b:2805:3)
+at App
+at t.value (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9c1a87de-0b15-48cc-868d-d1c9388bc414-00-3ag68id7g087p.worf.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
