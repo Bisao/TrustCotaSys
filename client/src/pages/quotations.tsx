@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertQuotationRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import { SupplierQuotationsSection } from "@/components/quotations/supplier-quotations-section";
-import { FileUploadSection } from "@/components/quotations/file-upload";
+import { UploadDialog } from "@/components/quotations/upload-dialog";
 
 const quotationFormSchema = insertQuotationRequestSchema.extend({
   title: z.string().min(1, "Título é obrigatório"),
@@ -240,7 +240,6 @@ export default function Quotations() {
                 <TabsTrigger value="requests">Requisições</TabsTrigger>
                 <TabsTrigger value="quotations">Cotações</TabsTrigger>
                 <TabsTrigger value="approvals">Aprovações</TabsTrigger>
-                <TabsTrigger value="upload">Importar</TabsTrigger>
               </TabsList>
               
               <div className="flex items-center space-x-4">
@@ -251,13 +250,14 @@ export default function Quotations() {
                   className="w-64"
                 />
                 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="bg-primary hover:bg-blue-700 text-white">
-                      <span className="material-icons mr-2 text-sm">add</span>
-                      Nova Requisição
-                    </Button>
-                  </DialogTrigger>
+                <div className="flex gap-2">
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-primary hover:bg-blue-700 text-white">
+                        <span className="material-icons mr-2 text-sm">add</span>
+                        Nova Requisição
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Nova Requisição de Cotação</DialogTitle>
@@ -400,7 +400,32 @@ export default function Quotations() {
                     </Form>
                   </DialogContent>
                 </Dialog>
+                
+                {activeTab === "requests" && (
+                  <UploadDialog 
+                    uploadType="requisitions"
+                    triggerButton={
+                      <Button variant="outline" className="text-blue-600 border-blue-300 hover:bg-blue-50">
+                        <span className="material-icons mr-2 text-sm">upload</span>
+                        Importar Requisições
+                      </Button>
+                    }
+                  />
+                )}
+                
+                {activeTab === "quotations" && (
+                  <UploadDialog 
+                    uploadType="supplier-quotations"
+                    triggerButton={
+                      <Button variant="outline" className="text-green-600 border-green-300 hover:bg-green-50">
+                        <span className="material-icons mr-2 text-sm">upload</span>
+                        Importar Cotações
+                      </Button>
+                    }
+                  />
+                )}
               </div>
+            </div>
             </div>
 
             <TabsContent value="requests" className="space-y-4">
@@ -575,9 +600,6 @@ export default function Quotations() {
               )}
             </TabsContent>
 
-            <TabsContent value="upload" className="space-y-4">
-              <FileUploadSection />
-            </TabsContent>
           </Tabs>
         </main>
       </div>
