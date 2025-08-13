@@ -800,6 +800,195 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Upload supplier quotations (cotações de fornecedores)
+  app.post('/api/upload/supplier-quotations', isAuthenticated, requireQuotationProcessor, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "Nenhum arquivo enviado" });
+      }
+
+      const buffer = req.file.buffer;
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      
+      // Parse the spreadsheet
+      let jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      // Handle malformed spreadsheets
+      const hasOnlyEmptyColumns = jsonData.length > 0 && 
+        Object.keys(jsonData[0] as any).every(key => key.includes('__EMPTY'));
+      
+      if (hasOnlyEmptyColumns) {
+        console.log("Detected malformed supplier quotation spreadsheet, trying alternative parsing...");
+        jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // Convert array format to object format with proper headers
+        const convertedData = [];
+        for (let i = 1; i < jsonData.length; i++) { // Skip header row
+          const row = jsonData[i] as any[];
+          if (row && row.length > 0 && row.some(cell => cell !== undefined && cell !== null && cell !== '')) {
+            convertedData.push({
+              'Fornecedor': row[0],
+              'Número da Cotação': row[1],
+              'Requisição ID': row[2],
+              'Produto/Serviço': row[3],
+              'Quantidade': row[4],
+              'Preço Unitário': row[5],
+              'Preço Total': row[6],
+              'Prazo de Entrega (dias)': row[7],
+              'Condições de Pagamento': row[8],
+              'Observações': row[9]
+            });
+          }
+        }
+        jsonData = convertedData;
+      }
+
+      console.log("Available columns in supplier quotation spreadsheet:", jsonData.length > 0 ? Object.keys(jsonData[0] as any) : 'No data');
+      console.log("First 3 rows sample:", jsonData.slice(0, 3));
+
+      let created = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        try {
+          // Map column values for supplier quotations
+          const getColumnValue = (possibleNames: string[]) => {
+            for (const name of possibleNames) {
+              if ((row as any)[name] !== undefined && (row as any)[name] !== null && (row as any)[name] !== '') {
+                return (row as any)[name];
+              }
+            }
+            return undefined;
+          };
+
+          console.log(`Row ${i + 1} data:`, {
+            supplier: getColumnValue(['Fornecedor', 'Supplier', 'Nome do Fornecedor']),
+            quotationNumber: getColumnValue(['Número da Cotação', 'Quotation Number', 'Numero Cotacao']),
+            quotationRequestId: getColumnValue(['Requisição ID', 'Request ID', 'ID da Requisição']),
+            allKeys: Object.keys(row as any),
+            rawRow: row
+          });
+
+          // Extract required fields for supplier quotation
+          const supplierName = getColumnValue(['Fornecedor', 'Supplier', 'Nome do Fornecedor']);
+          const quotationNumber = getColumnValue(['Número da Cotação', 'Quotation Number', 'Numero Cotacao']);
+          const quotationRequestId = getColumnValue(['Requisição ID', 'Request ID', 'ID da Requisição']);
+          const productName = getColumnValue(['Produto/Serviço', 'Product', 'Produto', 'Serviço', 'Item']);
+          const quantity = getColumnValue(['Quantidade', 'Quantity', 'Qtd']);
+          const unitPrice = getColumnValue(['Preço Unitário', 'Unit Price', 'Preco Unitario']);
+          const totalPrice = getColumnValue(['Preço Total', 'Total Price', 'Preco Total']);
+          const deliveryTime = getColumnValue(['Prazo de Entrega (dias)', 'Delivery Time', 'Prazo Entrega']);
+          const paymentTerms = getColumnValue(['Condições de Pagamento', 'Payment Terms', 'Condicoes Pagamento']);
+          const observations = getColumnValue(['Observações', 'Observations', 'Obs']);
+
+          // Skip rows with metadata or empty essential data
+          if (!supplierName || !quotationRequestId || !productName ||
+              String(supplierName).includes(':') || 
+              String(supplierName).toUpperCase().includes('EMPRESA') ||
+              String(supplierName).toUpperCase().includes('CONTATO')) {
+            console.log(`Skipping row ${i + 1}: ${supplierName} (metadata or missing data)`);
+            skipped++;
+            continue;
+          }
+
+          // Validate numeric fields
+          const numericQuantity = parseFloat(String(quantity || '0').replace(',', '.'));
+          const numericUnitPrice = parseFloat(String(unitPrice || '0').replace(',', '.'));
+          const numericTotalPrice = parseFloat(String(totalPrice || '0').replace(',', '.'));
+          const numericDeliveryTime = parseInt(String(deliveryTime || '0'));
+
+          if (isNaN(numericQuantity) || isNaN(numericUnitPrice) || isNaN(numericTotalPrice)) {
+            errors.push(`Linha ${i + 1}: Valores numéricos inválidos`);
+            skipped++;
+            continue;
+          }
+
+          // Find or create supplier
+          let supplier = await storage.getSupplierByName(supplierName);
+          if (!supplier) {
+            supplier = await storage.createSupplier({
+              name: supplierName,
+              status: 'ativo'
+            });
+          }
+
+          // Verify quotation request exists
+          const quotationRequest = await storage.getQuotationRequest(quotationRequestId);
+          if (!quotationRequest) {
+            errors.push(`Linha ${i + 1}: Requisição ${quotationRequestId} não encontrada`);
+            skipped++;
+            continue;
+          }
+
+          // Create or update supplier quotation
+          const existingQuotation = await storage.getSupplierQuotationByRequestAndSupplier(quotationRequestId, supplier.id);
+          
+          if (existingQuotation) {
+            // Update existing quotation
+            await storage.updateSupplierQuotation(existingQuotation.id, {
+              quotationNumber: quotationNumber || existingQuotation.quotationNumber,
+              deliveryTime: numericDeliveryTime || existingQuotation.deliveryTime,
+              paymentTerms: paymentTerms || existingQuotation.paymentTerms,
+              totalAmount: numericTotalPrice.toString(),
+              observations: observations || existingQuotation.observations
+            });
+          } else {
+            // Create new supplier quotation
+            const supplierQuotation = await storage.createSupplierQuotation({
+              quotationRequestId,
+              supplierId: supplier.id,
+              quotationNumber: quotationNumber || `COT-${Date.now()}`,
+              deliveryTime: numericDeliveryTime,
+              paymentTerms: paymentTerms || 'A vista',
+              totalAmount: numericTotalPrice.toString(),
+              observations
+            });
+
+            // Create quotation items (simplified - assumes one item per row)
+            // In a real scenario, you'd need to map to existing quotation request items
+            // For now, we'll create the quotation without detailed items
+          }
+
+          created++;
+
+        } catch (error) {
+          console.error(`Error processing row ${i + 1}:`, error);
+          errors.push(`Linha ${i + 1}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+          skipped++;
+        }
+      }
+
+      const processedData = {
+        processed: jsonData.length,
+        created,
+        skipped,
+        errors: errors.slice(0, 10)
+      };
+      
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action: 'upload',
+        entityType: 'supplier_quotation',
+        entityId: 'bulk_upload',
+        changes: { 
+          filename: req.file.originalname,
+          processed: processedData.processed,
+          created: processedData.created,
+          skipped: processedData.skipped
+        },
+      });
+
+      res.json(processedData);
+    } catch (error) {
+      console.error("Error processing supplier quotation upload:", error);
+      res.status(500).json({ message: "Falha ao processar planilha de cotações" });
+    }
+  });
+
   // AI analysis routes
   app.get('/api/ai-analyses', isAuthenticated, requireAdmin, async (req, res) => {
     try {

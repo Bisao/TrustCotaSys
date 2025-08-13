@@ -44,6 +44,7 @@ export interface IStorage {
   // Supplier operations
   getSuppliers(): Promise<Supplier[]>;
   getSupplier(id: string): Promise<Supplier | undefined>;
+  getSupplierByName(name: string): Promise<Supplier | undefined>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
   updateSupplier(id: string, supplier: Partial<InsertSupplier>): Promise<Supplier>;
   deleteSupplier(id: string): Promise<void>;
@@ -83,6 +84,7 @@ export interface IStorage {
   // Supplier Quotation operations
   getSupplierQuotations(quotationRequestId: string): Promise<SupplierQuotation[]>;
   getSupplierQuotation(id: string): Promise<SupplierQuotation | undefined>;
+  getSupplierQuotationByRequestAndSupplier(quotationRequestId: string, supplierId: string): Promise<SupplierQuotation | undefined>;
   createSupplierQuotation(quotation: InsertSupplierQuotation): Promise<SupplierQuotation>;
   updateSupplierQuotation(id: string, quotation: Partial<InsertSupplierQuotation>): Promise<SupplierQuotation>;
   deleteSupplierQuotation(id: string): Promise<void>;
@@ -150,6 +152,11 @@ export class DatabaseStorage implements IStorage {
 
   async getSupplier(id: string): Promise<Supplier | undefined> {
     const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, id));
+    return supplier;
+  }
+
+  async getSupplierByName(name: string): Promise<Supplier | undefined> {
+    const [supplier] = await db.select().from(suppliers).where(eq(suppliers.name, name));
     return supplier;
   }
 
@@ -368,6 +375,19 @@ export class DatabaseStorage implements IStorage {
 
   async getSupplierQuotation(id: string): Promise<SupplierQuotation | undefined> {
     const [quotation] = await db.select().from(supplierQuotations).where(eq(supplierQuotations.id, id));
+    return quotation;
+  }
+
+  async getSupplierQuotationByRequestAndSupplier(quotationRequestId: string, supplierId: string): Promise<SupplierQuotation | undefined> {
+    const [quotation] = await db
+      .select()
+      .from(supplierQuotations)
+      .where(
+        and(
+          eq(supplierQuotations.quotationRequestId, quotationRequestId),
+          eq(supplierQuotations.supplierId, supplierId)
+        )
+      );
     return quotation;
   }
 
@@ -708,6 +728,15 @@ class MemStorage implements IStorage {
     return this.suppliers.get(id);
   }
 
+  async getSupplierByName(name: string): Promise<Supplier | undefined> {
+    for (const supplier of this.suppliers.values()) {
+      if (supplier.name === name) {
+        return supplier;
+      }
+    }
+    return undefined;
+  }
+
   async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
     const newSupplier: Supplier = {
       ...supplier,
@@ -914,6 +943,14 @@ class MemStorage implements IStorage {
 
   async getSupplierQuotations(requestId?: string): Promise<SupplierQuotation[]> { return []; }
   async getSupplierQuotation(id: string): Promise<SupplierQuotation | undefined> { return this.supplierQuotations.get(id); }
+  async getSupplierQuotationByRequestAndSupplier(quotationRequestId: string, supplierId: string): Promise<SupplierQuotation | undefined> {
+    for (const quotation of this.supplierQuotations.values()) {
+      if (quotation.quotationRequestId === quotationRequestId && quotation.supplierId === supplierId) {
+        return quotation;
+      }
+    }
+    return undefined;
+  }
   async createSupplierQuotation(quotation: InsertSupplierQuotation): Promise<SupplierQuotation> { 
     const newQuotation: SupplierQuotation = { 
       ...quotation, 
