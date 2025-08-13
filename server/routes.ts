@@ -646,35 +646,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+      // Log available columns for debugging
+      console.log("Available columns in spreadsheet:", jsonData.length > 0 ? Object.keys(jsonData[0]) : 'No data');
+      console.log("First row sample:", jsonData.length > 0 ? jsonData[0] : 'No data');
+
       let created = 0;
       let skipped = 0;
       const errors: string[] = [];
 
-      for (const row of jsonData) {
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i];
         try {
+          // Mapear diferentes variações de nomes de colunas
+          const getColumnValue = (possibleNames: string[]) => {
+            for (const name of possibleNames) {
+              if ((row as any)[name] !== undefined && (row as any)[name] !== null && (row as any)[name] !== '') {
+                return (row as any)[name];
+              }
+            }
+            return undefined;
+          };
+
           const quotationData = {
-            title: (row as any)['Título da Requisição'] || (row as any)['titulo'] || (row as any)['Titulo'],
-            description: (row as any)['Descrição'] || (row as any)['descricao'] || (row as any)['Descricao'],
-            department: (row as any)['Departamento'] || (row as any)['departamento'],
-            costCenter: (row as any)['Centro de Custo'] || (row as any)['centro_custo'],
-            urgency: (row as any)['Urgência'] || (row as any)['urgencia'] || 'normal',
-            totalBudget: (row as any)['Orçamento Estimado'] || (row as any)['orcamento'] || (row as any)['budget'],
+            title: getColumnValue([
+              'Título da Requisição', 'Titulo da Requisição', 'Título', 'Titulo', 
+              'título', 'titulo', 'Title', 'Nome', 'Descrição do Item', 'Item'
+            ]),
+            description: getColumnValue([
+              'Descrição', 'Descricao', 'Description', 'Detalhes', 'Observações'
+            ]),
+            department: getColumnValue([
+              'Departamento', 'Department', 'Setor', 'Area', 'Área'
+            ]) || 'Geral', // Default department if not provided
+            costCenter: getColumnValue([
+              'Centro de Custo', 'Centro Custo', 'Cost Center', 'CC'
+            ]),
+            urgency: getColumnValue([
+              'Urgência', 'Urgencia', 'Prioridade', 'Priority'
+            ]) || 'normal',
+            totalBudget: getColumnValue([
+              'Orçamento Estimado', 'Orcamento', 'Budget', 'Valor', 'Preço', 'Price'
+            ]),
             requesterId: req.user.claims.sub,
             status: 'rascunho' as const,
           };
 
+          // Debug log for troubleshooting
+          console.log(`Row ${i + 1} data:`, {
+            title: quotationData.title,
+            department: quotationData.department,
+            allKeys: Object.keys(row)
+          });
+
           // Validate required fields
-          if (!quotationData.title) {
-            errors.push(`Linha ${created + skipped + 1}: Título é obrigatório`);
+          if (!quotationData.title || quotationData.title.toString().trim() === '') {
+            errors.push(`Linha ${i + 2}: Título é obrigatório (colunas disponíveis: ${Object.keys(row).join(', ')})`);
             skipped++;
             continue;
           }
 
-          if (!quotationData.department) {
-            errors.push(`Linha ${created + skipped + 1}: Departamento é obrigatório`);
-            skipped++;
-            continue;
-          }
+          // Clean title
+          quotationData.title = quotationData.title.toString().trim();
 
           // Convert budget to proper format if provided
           if (quotationData.totalBudget && typeof quotationData.totalBudget === 'string') {
@@ -688,7 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
         } catch (error) {
           console.error("Error processing row:", error);
-          errors.push(`Linha ${created + skipped + 1}: Erro ao processar dados`);
+          errors.push(`Linha ${i + 2}: Erro ao processar dados - ${(error as Error).message}`);
           skipped++;
         }
       }
