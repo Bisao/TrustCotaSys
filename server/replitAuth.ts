@@ -32,13 +32,13 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || "245af46cf0c8de42957bc842f41024745dbf644057d898db5f2d47f57e8cd8e857ee8dbf2c0cfb7ae309a9a1eca6f07aaa5b44bd00204950990a948ff6fa8190",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
     },
   });
