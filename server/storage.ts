@@ -609,4 +609,417 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory storage implementation for development
+class MemStorage implements IStorage {
+  private users = new Map<string, User>();
+  private suppliers = new Map<string, Supplier>();
+  private products = new Map<string, Product>();
+  private categories = new Map<string, Category>();
+  private quotationRequests = new Map<string, QuotationRequest>();
+  private quotationRequestItems = new Map<string, QuotationRequestItem>();
+  private supplierQuotations = new Map<string, SupplierQuotation>();
+  private supplierQuotationItems = new Map<string, SupplierQuotationItem>();
+  private purchaseOrders = new Map<string, PurchaseOrder>();
+  private auditLogs = new Map<string, AuditLog>();
+  private aiAnalyses = new Map<string, AiAnalysis>();
+
+  constructor() {
+    this.seedData();
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  }
+
+  private seedData() {
+    // Create default admin user
+    const adminUser: User = {
+      id: "admin-user",
+      email: "admin@trustcota.com",
+      firstName: "Admin",
+      lastName: "User",
+      profileImageUrl: null,
+      role: "admin",
+      department: "TI",
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.users.set(adminUser.id, adminUser);
+
+    // Create sample categories
+    const officeCategory: Category = {
+      id: "cat-office",
+      name: "Material de Escritório",
+      description: "Materiais para uso geral em escritório",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.categories.set(officeCategory.id, officeCategory);
+
+    // Create sample products
+    const product1: Product = {
+      id: "prod-1",
+      name: "Papel A4 75g",
+      description: "Resma de papel A4 75g com 500 folhas",
+      categoryId: officeCategory.id,
+      unit: "resma",
+      estimatedPrice: 25.00,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.products.set(product1.id, product1);
+  }
+
+  // User operations
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(user: UpsertUser): Promise<User> {
+    const existingUser = Array.from(this.users.values()).find(u => u.email === user.email);
+    
+    if (existingUser) {
+      const updatedUser = { ...existingUser, ...user, updatedAt: new Date() };
+      this.users.set(existingUser.id, updatedUser);
+      return updatedUser;
+    } else {
+      const newUser: User = {
+        id: this.generateId(),
+        ...user,
+        role: user.role || "requisitante",
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.users.set(newUser.id, newUser);
+      return newUser;
+    }
+  }
+
+  // Supplier operations
+  async getSuppliers(): Promise<Supplier[]> {
+    return Array.from(this.suppliers.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getSupplier(id: string): Promise<Supplier | undefined> {
+    return this.suppliers.get(id);
+  }
+
+  async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
+    const newSupplier: Supplier = {
+      ...supplier,
+      id: this.generateId(),
+      status: supplier.status || "ativo",
+      score: supplier.score || "0.00",
+      totalQuotations: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.suppliers.set(newSupplier.id, newSupplier);
+    return newSupplier;
+  }
+
+  async updateSupplier(id: string, supplier: Partial<InsertSupplier>): Promise<Supplier> {
+    const existing = this.suppliers.get(id);
+    if (!existing) throw new Error("Supplier not found");
+    
+    const updated = { ...existing, ...supplier, updatedAt: new Date() };
+    this.suppliers.set(id, updated);
+    return updated;
+  }
+
+  async deleteSupplier(id: string): Promise<void> {
+    this.suppliers.delete(id);
+  }
+
+  async searchSuppliers(query: string): Promise<Supplier[]> {
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.suppliers.values()).filter(supplier =>
+      supplier.name.toLowerCase().includes(lowerQuery) ||
+      supplier.cnpj?.toLowerCase().includes(lowerQuery) ||
+      supplier.email?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  // Product operations
+  async getProducts(): Promise<Product[]> {
+    return Array.from(this.products.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getProduct(id: string): Promise<Product | undefined> {
+    return this.products.get(id);
+  }
+
+  async createProduct(product: InsertProduct): Promise<Product> {
+    const newProduct: Product = {
+      ...product,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.products.set(newProduct.id, newProduct);
+    return newProduct;
+  }
+
+  async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product> {
+    const existing = this.products.get(id);
+    if (!existing) throw new Error("Product not found");
+    
+    const updated = { ...existing, ...product, updatedAt: new Date() };
+    this.products.set(id, updated);
+    return updated;
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    this.products.delete(id);
+  }
+
+  async searchProducts(query: string): Promise<Product[]> {
+    const lowerQuery = query.toLowerCase();
+    return Array.from(this.products.values()).filter(product =>
+      product.name.toLowerCase().includes(lowerQuery) ||
+      product.description?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  async getProductsByCategory(categoryId: string): Promise<Product[]> {
+    return Array.from(this.products.values()).filter(p => p.categoryId === categoryId);
+  }
+
+  // Category operations
+  async getCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async getCategory(id: string): Promise<Category | undefined> {
+    return this.categories.get(id);
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const newCategory: Category = {
+      ...category,
+      id: this.generateId(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.categories.set(newCategory.id, newCategory);
+    return newCategory;
+  }
+
+  async updateCategory(id: string, category: Partial<InsertCategory>): Promise<Category> {
+    const existing = this.categories.get(id);
+    if (!existing) throw new Error("Category not found");
+    
+    const updated = { ...existing, ...category };
+    this.categories.set(id, updated);
+    return updated;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    this.categories.delete(id);
+  }
+
+  // Quotation Request operations (simplified)
+  async getQuotationRequests(): Promise<QuotationRequest[]> {
+    return Array.from(this.quotationRequests.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getQuotationRequest(id: string): Promise<QuotationRequest | undefined> {
+    return this.quotationRequests.get(id);
+  }
+
+  async createQuotationRequest(request: InsertQuotationRequest): Promise<QuotationRequest> {
+    const requestNumber = `REQ-${Date.now()}`;
+    const newRequest: QuotationRequest = {
+      ...request,
+      id: this.generateId(),
+      requestNumber,
+      status: request.status || "rascunho",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.quotationRequests.set(newRequest.id, newRequest);
+    return newRequest;
+  }
+
+  async updateQuotationRequest(id: string, request: Partial<InsertQuotationRequest>): Promise<QuotationRequest> {
+    const existing = this.quotationRequests.get(id);
+    if (!existing) throw new Error("Quotation request not found");
+    
+    const updated = { ...existing, ...request, updatedAt: new Date() };
+    this.quotationRequests.set(id, updated);
+    return updated;
+  }
+
+  async deleteQuotationRequest(id: string): Promise<void> {
+    this.quotationRequests.delete(id);
+  }
+
+  async getQuotationRequestsByUser(userId: string): Promise<QuotationRequest[]> {
+    return Array.from(this.quotationRequests.values())
+      .filter(req => req.requesterId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getQuotationRequestsForApproval(approverId: string): Promise<QuotationRequest[]> {
+    return Array.from(this.quotationRequests.values())
+      .filter(req => req.approverId === approverId && req.status === "aguardando_aprovacao")
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  // Stub implementations for remaining methods
+  async getQuotationRequestItems(requestId: string): Promise<QuotationRequestItem[]> { return []; }
+  async createQuotationRequestItem(item: InsertQuotationRequestItem): Promise<QuotationRequestItem> { 
+    const newItem: QuotationRequestItem = { ...item, id: this.generateId() };
+    this.quotationRequestItems.set(newItem.id, newItem);
+    return newItem;
+  }
+  async updateQuotationRequestItem(id: string, item: Partial<InsertQuotationRequestItem>): Promise<QuotationRequestItem> { 
+    const existing = this.quotationRequestItems.get(id);
+    if (!existing) throw new Error("Item not found");
+    const updated = { ...existing, ...item };
+    this.quotationRequestItems.set(id, updated);
+    return updated;
+  }
+  async deleteQuotationRequestItem(id: string): Promise<void> { this.quotationRequestItems.delete(id); }
+
+  async getSupplierQuotations(requestId?: string): Promise<SupplierQuotation[]> { return []; }
+  async getSupplierQuotation(id: string): Promise<SupplierQuotation | undefined> { return this.supplierQuotations.get(id); }
+  async createSupplierQuotation(quotation: InsertSupplierQuotation): Promise<SupplierQuotation> { 
+    const newQuotation: SupplierQuotation = { 
+      ...quotation, 
+      id: this.generateId(),
+      submittedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.supplierQuotations.set(newQuotation.id, newQuotation);
+    return newQuotation;
+  }
+  async updateSupplierQuotation(id: string, quotation: Partial<InsertSupplierQuotation>): Promise<SupplierQuotation> { 
+    const existing = this.supplierQuotations.get(id);
+    if (!existing) throw new Error("Quotation not found");
+    const updated = { ...existing, ...quotation, updatedAt: new Date() };
+    this.supplierQuotations.set(id, updated);
+    return updated;
+  }
+  async deleteSupplierQuotation(id: string): Promise<void> { this.supplierQuotations.delete(id); }
+
+  async getSupplierQuotationItems(quotationId: string): Promise<SupplierQuotationItem[]> { return []; }
+  async createSupplierQuotationItem(item: InsertSupplierQuotationItem): Promise<SupplierQuotationItem> { 
+    const newItem: SupplierQuotationItem = { ...item, id: this.generateId() };
+    this.supplierQuotationItems.set(newItem.id, newItem);
+    return newItem;
+  }
+  async updateSupplierQuotationItem(id: string, item: Partial<InsertSupplierQuotationItem>): Promise<SupplierQuotationItem> { 
+    const existing = this.supplierQuotationItems.get(id);
+    if (!existing) throw new Error("Item not found");
+    const updated = { ...existing, ...item };
+    this.supplierQuotationItems.set(id, updated);
+    return updated;
+  }
+  async deleteSupplierQuotationItem(id: string): Promise<void> { this.supplierQuotationItems.delete(id); }
+
+  async getPurchaseOrders(): Promise<PurchaseOrder[]> { return []; }
+  async getPurchaseOrder(id: string): Promise<PurchaseOrder | undefined> { return this.purchaseOrders.get(id); }
+  async createPurchaseOrder(order: InsertPurchaseOrder): Promise<PurchaseOrder> { 
+    const newOrder: PurchaseOrder = { 
+      ...order, 
+      id: this.generateId(),
+      orderNumber: `PO-${Date.now()}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.purchaseOrders.set(newOrder.id, newOrder);
+    return newOrder;
+  }
+  async updatePurchaseOrder(id: string, order: Partial<InsertPurchaseOrder>): Promise<PurchaseOrder> { 
+    const existing = this.purchaseOrders.get(id);
+    if (!existing) throw new Error("Purchase order not found");
+    const updated = { ...existing, ...order, updatedAt: new Date() };
+    this.purchaseOrders.set(id, updated);
+    return updated;
+  }
+  async deletePurchaseOrder(id: string): Promise<void> { this.purchaseOrders.delete(id); }
+
+  async getAuditLogs(entityId?: string, entityType?: string): Promise<AuditLog[]> { return []; }
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> { 
+    const newLog: AuditLog = { 
+      ...log, 
+      id: this.generateId(),
+      timestamp: new Date()
+    };
+    this.auditLogs.set(newLog.id, newLog);
+    return newLog;
+  }
+
+  async getAiAnalyses(entityId?: string): Promise<AiAnalysis[]> { return []; }
+  async createAiAnalysis(analysis: InsertAiAnalysis): Promise<AiAnalysis> { 
+    const newAnalysis: AiAnalysis = { 
+      ...analysis, 
+      id: this.generateId(),
+      createdAt: new Date()
+    };
+    this.aiAnalyses.set(newAnalysis.id, newAnalysis);
+    return newAnalysis;
+  }
+  async updateAiAnalysis(id: string, analysis: Partial<InsertAiAnalysis>): Promise<AiAnalysis> { 
+    const existing = this.aiAnalyses.get(id);
+    if (!existing) throw new Error("Analysis not found");
+    const updated = { ...existing, ...analysis };
+    this.aiAnalyses.set(id, updated);
+    return updated;
+  }
+  async deleteAiAnalysis(id: string): Promise<void> { this.aiAnalyses.delete(id); }
+
+  // Dashboard and analytics methods
+  async getDashboardStats(): Promise<any> {
+    return {
+      totalRequests: this.quotationRequests.size,
+      pendingApprovals: Array.from(this.quotationRequests.values())
+        .filter(req => req.status === "aguardando_aprovacao").length,
+      totalSuppliers: this.suppliers.size,
+      activeQuotations: Array.from(this.quotationRequests.values())
+        .filter(req => req.status === "em_cotacao").length,
+    };
+  }
+
+  async getRecentRequests(userId: string, limit: number = 5): Promise<any[]> {
+    return Array.from(this.quotationRequests.values())
+      .slice(0, limit)
+      .map(req => ({
+        id: req.id,
+        requestNumber: req.requestNumber,
+        title: req.title,
+        status: req.status,
+        totalBudget: req.totalBudget,
+        createdAt: req.createdAt,
+        requesterName: "Demo User",
+      }));
+  }
+
+  async getPendingApprovals(userId: string, limit: number = 5): Promise<any[]> {
+    return Array.from(this.quotationRequests.values())
+      .filter(req => req.status === "aguardando_aprovacao" && req.approverId === userId)
+      .slice(0, limit)
+      .map(req => ({
+        id: req.id,
+        requestNumber: req.requestNumber,
+        title: req.title,
+        totalBudget: req.totalBudget,
+        createdAt: req.createdAt,
+        urgency: req.urgency,
+      }));
+  }
+}
+
+// Use appropriate storage based on database availability
+import { db } from "./db";
+export const storage: IStorage = db ? new DatabaseStorage() : new MemStorage();

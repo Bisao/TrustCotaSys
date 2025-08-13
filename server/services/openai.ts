@@ -1,13 +1,17 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY environment variable is required");
-}
+const hasApiKey = !!process.env.OPENAI_API_KEY;
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai: OpenAI | null = null;
+
+if (hasApiKey) {
+  openai = new OpenAI({ 
+    apiKey: process.env.OPENAI_API_KEY
+  });
+} else {
+  console.log("OPENAI_API_KEY not found. OpenAI features will use fallback responses for development.");
+}
 
 interface MarketAnalysis {
   priceRanges: {
@@ -31,6 +35,21 @@ interface DashboardInsight {
 
 class OpenAIService {
   async analyzeMarketTrends(productName: string, category?: string): Promise<MarketAnalysis> {
+    if (!openai) {
+      // Fallback response for development
+      return {
+        priceRanges: {
+          min: 50,
+          max: 200,
+          average: 125
+        },
+        trends: ["Preços estáveis no último trimestre", "Demanda crescente por produtos sustentáveis"],
+        recommendations: ["Considere negociar contratos de longo prazo", "Avalie fornecedores alternativos"],
+        riskFactors: ["Volatilidade cambial", "Mudanças na legislação"],
+        confidence: 0.75
+      };
+    }
+
     try {
       const prompt = `Analyze the current market trends for the product "${productName}"${category ? ` in the category "${category}"` : ''} in Brazil. 
       
@@ -77,6 +96,16 @@ class OpenAIService {
   }
 
   async analyzeQuotationRequest(request: any): Promise<any> {
+    if (!openai) {
+      return {
+        costSavings: ["Considere negociar desconto para grandes volumes", "Avalie fornecedores locais para reduzir custos de frete"],
+        supplierRecommendations: ["Solicite cotações de pelo menos 3 fornecedores", "Verifique referências e certificações"],
+        timelineOptimization: ["Inicie processo de cotação com antecedência", "Considere prazos sazonais"],
+        riskAssessment: ["Baixo risco para fornecedores conhecidos", "Verifique disponibilidade de estoque"],
+        budgetAnalysis: ["Orçamento adequado para especificações", "Considere margem para variações"]
+      };
+    }
+
     try {
       const prompt = `Analyze this quotation request for potential issues, opportunities, and recommendations:
 
@@ -118,6 +147,32 @@ class OpenAIService {
   }
 
   async generateDashboardInsights(): Promise<DashboardInsight[]> {
+    if (!openai) {
+      return [
+        {
+          type: "opportunity",
+          title: "Otimização de Custos",
+          description: "Identifique oportunidades de economia através da consolidação de fornecedores",
+          priority: "high",
+          actionable: true
+        },
+        {
+          type: "trend",
+          title: "Tendência de Mercado",
+          description: "Preços de matérias-primas em alta - considere compras antecipadas",
+          priority: "medium",
+          actionable: true
+        },
+        {
+          type: "warning",
+          title: "Alerta de Fornecedor",
+          description: "Revisar contratos que vencem nos próximos 30 dias",
+          priority: "high",
+          actionable: true
+        }
+      ];
+    }
+
     try {
       const prompt = `Generate current procurement insights for a Brazilian company's dashboard. Focus on:
       
