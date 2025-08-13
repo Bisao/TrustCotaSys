@@ -10,6 +10,7 @@ import Suppliers from "@/pages/suppliers";
 import Products from "@/pages/products";
 import Quotations from "@/pages/quotations";
 import Analytics from "@/pages/analytics";
+import PurchaseOrders from "@/pages/purchase-orders";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
           <Route path="/suppliers" component={Suppliers} />
           <Route path="/products" component={Products} />
           <Route path="/quotations" component={Quotations} />
+          <Route path="/purchase-orders" component={PurchaseOrders} />
           <Route path="/analytics" component={Analytics} />
         </>
       )}

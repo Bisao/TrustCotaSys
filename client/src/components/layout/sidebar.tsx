@@ -38,6 +38,12 @@ const navigationItems = [
     section: "cotacoes"
   },
   {
+    label: "Ordens de Compra",
+    icon: "shopping_cart",
+    path: "/purchase-orders",
+    section: "cotacoes"
+  },
+  {
     label: "Relatórios",
     icon: "analytics",
     path: "/analytics",

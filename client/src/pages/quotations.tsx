@@ -19,6 +19,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertQuotationRequestSchema } from "@shared/schema";
 import { z } from "zod";
+import { SupplierQuotationsSection } from "@/components/quotations/supplier-quotations-section";
+import { FileUploadSection } from "@/components/quotations/file-upload";
 
 const quotationFormSchema = insertQuotationRequestSchema.extend({
   title: z.string().min(1, "Título é obrigatório"),
@@ -197,7 +199,7 @@ export default function Quotations() {
     );
   };
 
-  const filteredRequests = quotationRequests?.filter((request: any) =>
+  const filteredRequests = (quotationRequests as any[])?.filter((request: any) =>
     request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     request.requestNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
     request.department?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -238,6 +240,7 @@ export default function Quotations() {
                 <TabsTrigger value="requests">Requisições</TabsTrigger>
                 <TabsTrigger value="quotations">Cotações</TabsTrigger>
                 <TabsTrigger value="approvals">Aprovações</TabsTrigger>
+                <TabsTrigger value="upload">Importar</TabsTrigger>
               </TabsList>
               
               <div className="flex items-center space-x-4">
@@ -282,7 +285,7 @@ export default function Quotations() {
                             <FormItem>
                               <FormLabel>Descrição</FormLabel>
                               <FormControl>
-                                <Textarea {...field} />
+                                <Textarea {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -296,7 +299,7 @@ export default function Quotations() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Departamento *</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Selecione o departamento" />
@@ -323,7 +326,7 @@ export default function Quotations() {
                               <FormItem>
                                 <FormLabel>Centro de Custo</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -338,7 +341,7 @@ export default function Quotations() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Urgência</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue />
@@ -505,15 +508,7 @@ export default function Quotations() {
             </TabsContent>
 
             <TabsContent value="quotations" className="space-y-4">
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <span className="material-icons text-4xl text-gray-300 mb-4">compare</span>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Cotações de Fornecedores</h3>
-                  <p className="text-gray-500 text-center">
-                    Visualize e compare as cotações recebidas dos fornecedores.
-                  </p>
-                </CardContent>
-              </Card>
+              <SupplierQuotationsSection />
             </TabsContent>
 
             <TabsContent value="approvals" className="space-y-4">
@@ -578,6 +573,10 @@ export default function Quotations() {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="upload" className="space-y-4">
+              <FileUploadSection />
             </TabsContent>
           </Tabs>
         </main>

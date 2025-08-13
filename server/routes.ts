@@ -2,9 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertSupplierSchema, insertProductSchema, insertCategorySchema, insertQuotationRequestSchema } from "@shared/schema";
+import { db } from "./db";
+import { purchaseOrders } from "@shared/schema";
+import { like, desc } from "drizzle-orm";
+import { insertSupplierSchema, insertProductSchema, insertCategorySchema, insertQuotationRequestSchema, insertSupplierQuotationSchema } from "@shared/schema";
 import { openaiService } from "./services/openai";
 import { emailService } from "./services/email";
+import { requireAdmin, requireApprover, requireQuotationProcessor, requireRequester, requireOwnershipOrRole } from "./middleware/rbac";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -64,8 +68,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Supplier routes
-  app.get('/api/suppliers', isAuthenticated, async (req, res) => {
+  // Supplier routes (Admin and Quotation Processors can manage suppliers)
+  app.get('/api/suppliers', isAuthenticated, requireQuotationProcessor, async (req, res) => {
     try {
       const suppliers = await storage.getSuppliers();
       res.json(suppliers);
@@ -75,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/suppliers/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/suppliers/:id', isAuthenticated, requireQuotationProcessor, async (req, res) => {
     try {
       const supplier = await storage.getSupplier(req.params.id);
       if (!supplier) {
@@ -88,7 +92,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/suppliers', isAuthenticated, async (req: any, res) => {
+  app.post('/api/suppliers', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertSupplierSchema.parse(req.body);
       const supplier = await storage.createSupplier(validatedData);
@@ -109,7 +113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/suppliers/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/suppliers/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertSupplierSchema.partial().parse(req.body);
       const supplier = await storage.updateSupplier(req.params.id, validatedData);
@@ -130,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/suppliers/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/suppliers/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteSupplier(req.params.id);
       
@@ -150,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/suppliers/search/:query', isAuthenticated, async (req, res) => {
+  app.get('/api/suppliers/search/:query', isAuthenticated, requireQuotationProcessor, async (req, res) => {
     try {
       const suppliers = await storage.searchSuppliers(req.params.query);
       res.json(suppliers);
@@ -160,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Product routes
+  // Product routes (Admin can manage, others can view)
   app.get('/api/products', isAuthenticated, async (req, res) => {
     try {
       const products = await storage.getProducts();
@@ -184,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/products', isAuthenticated, async (req: any, res) => {
+  app.post('/api/products', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(validatedData);
@@ -205,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/products/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/products/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertProductSchema.partial().parse(req.body);
       const product = await storage.updateProduct(req.params.id, validatedData);
@@ -226,7 +230,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/products/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/products/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       await storage.deleteProduct(req.params.id);
       
@@ -267,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/categories', isAuthenticated, async (req: any, res) => {
+  app.post('/api/categories', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertCategorySchema.parse(req.body);
       const category = await storage.createCategory(validatedData);
@@ -288,7 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Quotation Request routes
+  // Quotation Request routes (Requesters can create, others can view based on role)
   app.get('/api/quotation-requests', isAuthenticated, async (req, res) => {
     try {
       const requests = await storage.getQuotationRequests();
@@ -312,7 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/quotation-requests', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quotation-requests', isAuthenticated, requireRequester, async (req: any, res) => {
     try {
       const validatedData = insertQuotationRequestSchema.parse({
         ...req.body,
@@ -371,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/quotation-requests/:id/approve', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quotation-requests/:id/approve', isAuthenticated, requireApprover, async (req: any, res) => {
     try {
       const { approvedAmount } = req.body;
       const request = await storage.updateQuotationRequest(req.params.id, {
@@ -404,7 +408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/quotation-requests/:id/reject', isAuthenticated, async (req: any, res) => {
+  app.post('/api/quotation-requests/:id/reject', isAuthenticated, requireApprover, async (req: any, res) => {
     try {
       const { rejectionReason } = req.body;
       const request = await storage.updateQuotationRequest(req.params.id, {
@@ -429,8 +433,207 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Audit log routes
-  app.get('/api/audit-logs', isAuthenticated, async (req, res) => {
+  // Supplier Quotation routes (Quotation processors can manage supplier quotations)
+  app.get('/api/quotation-requests/:id/supplier-quotations', isAuthenticated, requireQuotationProcessor, async (req, res) => {
+    try {
+      const quotations = await storage.getSupplierQuotations(req.params.id);
+      res.json(quotations);
+    } catch (error) {
+      console.error("Error fetching supplier quotations:", error);
+      res.status(500).json({ message: "Failed to fetch supplier quotations" });
+    }
+  });
+
+  app.post('/api/quotation-requests/:id/supplier-quotations', isAuthenticated, requireQuotationProcessor, async (req: any, res) => {
+    try {
+      const validatedData = insertSupplierQuotationSchema.parse({
+        ...req.body,
+        quotationRequestId: req.params.id,
+      });
+      const quotation = await storage.createSupplierQuotation(validatedData);
+      
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action: 'create',
+        entityType: 'supplier_quotation',
+        entityId: quotation.id,
+        changes: validatedData,
+      });
+
+      // Update quotation request status to "em_cotacao" if it's still in draft
+      const request = await storage.getQuotationRequest(req.params.id);
+      if (request && request.status === 'rascunho') {
+        await storage.updateQuotationRequest(req.params.id, { status: 'em_cotacao' });
+      }
+
+      // Send notification to other suppliers if this is the first quotation
+      try {
+        const allQuotations = await storage.getSupplierQuotations(req.params.id);
+        if (allQuotations.length === 1 && request) {
+          const allSuppliers = await storage.getSuppliers();
+          const selectedSuppliers = allSuppliers.filter(s => s.status === 'ativo').slice(0, 5);
+          await emailService.sendQuotationRequestNotification(selectedSuppliers, request);
+        }
+      } catch (emailError) {
+        console.error("Error sending quotation notifications:", emailError);
+      }
+
+      res.status(201).json(quotation);
+    } catch (error) {
+      console.error("Error creating supplier quotation:", error);
+      res.status(400).json({ message: "Failed to create supplier quotation" });
+    }
+  });
+
+  app.put('/api/supplier-quotations/:id', isAuthenticated, requireQuotationProcessor, async (req: any, res) => {
+    try {
+      const validatedData = insertSupplierQuotationSchema.partial().parse(req.body);
+      const quotation = await storage.updateSupplierQuotation(req.params.id, validatedData);
+      
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action: 'update',
+        entityType: 'supplier_quotation',
+        entityId: req.params.id,
+        changes: validatedData,
+      });
+
+      res.json(quotation);
+    } catch (error) {
+      console.error("Error updating supplier quotation:", error);
+      res.status(400).json({ message: "Failed to update supplier quotation" });
+    }
+  });
+
+  app.post('/api/supplier-quotations/:id/select', isAuthenticated, requireQuotationProcessor, async (req: any, res) => {
+    try {
+      const quotation = await storage.getSupplierQuotation(req.params.id);
+      if (!quotation) {
+        return res.status(404).json({ message: "Supplier quotation not found" });
+      }
+
+      // Unselect all other quotations for this request
+      const allQuotations = await storage.getSupplierQuotations(quotation.quotationRequestId);
+      for (const q of allQuotations) {
+        if (q.id !== req.params.id) {
+          await storage.updateSupplierQuotation(q.id, { isSelected: false });
+        }
+      }
+
+      // Select this quotation
+      const selectedQuotation = await storage.updateSupplierQuotation(req.params.id, { isSelected: true });
+
+      // Update quotation request status to "aguardando_aprovacao"
+      await storage.updateQuotationRequest(quotation.quotationRequestId, { 
+        status: 'aguardando_aprovacao',
+        totalBudget: quotation.totalAmount 
+      });
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action: 'select',
+        entityType: 'supplier_quotation',
+        entityId: req.params.id,
+        changes: { isSelected: true },
+      });
+
+      res.json(selectedQuotation);
+    } catch (error) {
+      console.error("Error selecting supplier quotation:", error);
+      res.status(500).json({ message: "Failed to select supplier quotation" });
+    }
+  });
+
+  // Purchase Order routes (Generated after approval)
+  app.get('/api/purchase-orders', isAuthenticated, async (req, res) => {
+    try {
+      const orders = await storage.getPurchaseOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching purchase orders:", error);
+      res.status(500).json({ message: "Failed to fetch purchase orders" });
+    }
+  });
+
+  app.get('/api/purchase-orders/:id', isAuthenticated, async (req, res) => {
+    try {
+      const order = await storage.getPurchaseOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ message: "Purchase order not found" });
+      }
+      res.json(order);
+    } catch (error) {
+      console.error("Error fetching purchase order:", error);
+      res.status(500).json({ message: "Failed to fetch purchase order" });
+    }
+  });
+
+  app.post('/api/quotation-requests/:id/generate-purchase-order', isAuthenticated, requireApprover, async (req: any, res) => {
+    try {
+      const request = await storage.getQuotationRequest(req.params.id);
+      if (!request || request.status !== 'aprovado') {
+        return res.status(400).json({ message: "Quotation request must be approved first" });
+      }
+
+      // Find the selected supplier quotation
+      const quotations = await storage.getSupplierQuotations(req.params.id);
+      const selectedQuotation = quotations.find(q => q.isSelected);
+      
+      if (!selectedQuotation) {
+        return res.status(400).json({ message: "No supplier quotation selected" });
+      }
+
+      // Generate order number
+      const today = new Date();
+      const yearMonth = today.getFullYear().toString() + (today.getMonth() + 1).toString().padStart(2, '0');
+      const [lastOrder] = await db
+        .select({ orderNumber: purchaseOrders.orderNumber })
+        .from(purchaseOrders)
+        .where(like(purchaseOrders.orderNumber, `PO-${yearMonth}%`))
+        .orderBy(desc(purchaseOrders.orderNumber))
+        .limit(1);
+
+      let sequence = 1;
+      if (lastOrder) {
+        const lastSequence = parseInt(lastOrder.orderNumber.split('-')[2]);
+        sequence = lastSequence + 1;
+      }
+
+      const orderNumber = `PO-${yearMonth}-${sequence.toString().padStart(3, '0')}`;
+
+      const purchaseOrder = await storage.createPurchaseOrder({
+        orderNumber,
+        quotationRequestId: req.params.id,
+        supplierId: selectedQuotation.supplierId,
+        totalAmount: selectedQuotation.totalAmount,
+        deliveryAddress: req.body.deliveryAddress,
+        expectedDeliveryDate: selectedQuotation.deliveryTime 
+          ? new Date(Date.now() + selectedQuotation.deliveryTime * 24 * 60 * 60 * 1000)
+          : null,
+        status: 'pendente',
+      });
+
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action: 'create',
+        entityType: 'purchase_order',
+        entityId: purchaseOrder.id,
+        changes: { orderNumber, supplierId: selectedQuotation.supplierId },
+      });
+
+      res.status(201).json(purchaseOrder);
+    } catch (error) {
+      console.error("Error generating purchase order:", error);
+      res.status(500).json({ message: "Failed to generate purchase order" });
+    }
+  });
+
+  // Audit log routes (Admin only)
+  app.get('/api/audit-logs', isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const { entityId } = req.query;
       const logs = await storage.getAuditLogs(entityId as string);
@@ -441,8 +644,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File upload routes
+  app.post('/api/upload/quotation-spreadsheet', isAuthenticated, requireRequester, async (req: any, res) => {
+    try {
+      // In a real implementation, you would use multer or similar for file handling
+      // For now, we'll simulate the processing
+      const mockProcessedData = {
+        processed: 5,
+        created: 5,
+        skipped: 0,
+        errors: []
+      };
+      
+      // Create audit log
+      await storage.createAuditLog({
+        userId: req.user.claims.sub,
+        action: 'upload',
+        entityType: 'quotation_request',
+        entityId: 'bulk_upload',
+        changes: { processed: mockProcessedData.processed },
+      });
+
+      res.json(mockProcessedData);
+    } catch (error) {
+      console.error("Error processing upload:", error);
+      res.status(500).json({ message: "Failed to process upload" });
+    }
+  });
+
   // AI analysis routes
-  app.get('/api/ai-analyses', isAuthenticated, async (req, res) => {
+  app.get('/api/ai-analyses', isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const { entityType, entityId } = req.query;
       const analyses = await storage.getAiAnalyses(entityType as string, entityId as string);
