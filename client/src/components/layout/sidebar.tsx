@@ -2,12 +2,6 @@ import { Link, useLocation } from "wouter";
 
 const navigationItems = [
   {
-    label: "Dashboard",
-    icon: "dashboard",
-    path: "/",
-    section: "main"
-  },
-  {
     label: "Fornecedores",
     icon: "business",
     path: "/suppliers",

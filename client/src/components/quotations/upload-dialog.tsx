@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -181,10 +181,12 @@ export function UploadDialog({ uploadType, triggerButton, onUploadComplete }: Up
             <span className="material-icons">upload_file</span>
             {getTitle()}
           </DialogTitle>
+          <DialogDescription>
+            {getDescription()}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
-          <p className="text-gray-600">{getDescription()}</p>
           
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${

@@ -32,11 +32,7 @@ export default function Header({ title, subtitle }: HeaderProps) {
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
           
-          {/* Quick Actions */}
-          <Button className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center space-x-2" data-testid="button-new-quotation">
-            <span className="material-icons text-sm">add</span>
-            <span>Nova Requisição</span>
-          </Button>
+          {/* Quick Actions - Removed duplicate button */}
         </div>
       </div>
     </header>
