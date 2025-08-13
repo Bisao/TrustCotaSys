@@ -98,7 +98,7 @@ export default function Suppliers() {
     },
   });
 
-  const filteredSuppliers = (suppliers || []).filter((supplier: any) =>
+  const filteredSuppliers = (suppliers as any[] || []).filter((supplier: any) =>
     supplier.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     supplier.cnpj?.includes(searchQuery) ||
     supplier.email?.toLowerCase().includes(searchQuery.toLowerCase())
