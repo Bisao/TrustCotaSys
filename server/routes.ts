@@ -801,7 +801,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload supplier quotations (cotações de fornecedores)
-  app.post('/api/upload/supplier-quotations', isAuthenticated, requireQuotationProcessor, upload.single('file'), async (req: any, res) => {
+  app.post('/api/upload/supplier-quotations', isAuthenticated, requireRequester, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "Nenhum arquivo enviado" });
