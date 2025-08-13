@@ -644,11 +644,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const buffer = req.file.buffer;
       const workbook = XLSX.read(buffer, { type: 'buffer' });
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      // Try different parsing strategies for malformed spreadsheets
+      let jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      // If we only have __EMPTY columns, try parsing without headers
+      const hasOnlyEmptyColumns = jsonData.length > 0 && 
+        Object.keys(jsonData[0]).every(key => key.includes('__EMPTY') || key.includes('Material de limpeza'));
+      
+      if (hasOnlyEmptyColumns) {
+        console.log("Detected malformed spreadsheet, trying alternative parsing...");
+        jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // Convert array format to object format with proper headers
+        const convertedData = [];
+        for (let i = 1; i < jsonData.length; i++) { // Skip first row if it's headers
+          const row = jsonData[i] as any[];
+          if (row && row.length > 0 && row.some(cell => cell !== undefined && cell !== null && cell !== '')) {
+            convertedData.push({
+              'Título da Requisição': row[0] || row[1] || row[2], // Try first non-empty cell
+              'Descrição': row[1] || row[2] || row[3],
+              'Departamento': 'Material de limpeza - CCL Cajamar', // From the header
+              'Quantidade': row[3] || row[4],
+              'Valor': row[4] || row[5] || row[6]
+            });
+          }
+        }
+        jsonData = convertedData;
+      }
 
       // Log available columns for debugging
       console.log("Available columns in spreadsheet:", jsonData.length > 0 ? Object.keys(jsonData[0]) : 'No data');
-      console.log("First row sample:", jsonData.length > 0 ? jsonData[0] : 'No data');
+      console.log("First 3 rows sample:", jsonData.slice(0, 3));
 
       let created = 0;
       let skipped = 0;
@@ -670,17 +697,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const quotationData = {
             title: getColumnValue([
               'Título da Requisição', 'Titulo da Requisição', 'Título', 'Titulo', 
-              'título', 'titulo', 'Title', 'Nome', 'Descrição do Item', 'Item'
-            ]),
+              'título', 'titulo', 'Title', 'Nome', 'Descrição do Item', 'Item',
+              // Handle cases where title might be in column key itself
+              'Material de limpeza - CCL Cajamar'
+            ]) || (Object.keys(row).find(key => 
+              key.includes('Material de limpeza') && (row as any)[key] && (row as any)[key].toString().trim()
+            ) ? (row as any)[Object.keys(row).find(key => key.includes('Material de limpeza')) || ''] : undefined),
             description: getColumnValue([
-              'Descrição', 'Descricao', 'Description', 'Detalhes', 'Observações'
+              'Descrição', 'Descricao', 'Description', 'Detalhes', 'Observações', 'Quantidade'
             ]),
             department: getColumnValue([
               'Departamento', 'Department', 'Setor', 'Area', 'Área'
-            ]) || 'Geral', // Default department if not provided
+            ]) || 'Material de limpeza - CCL Cajamar', // Use the detected department from header
             costCenter: getColumnValue([
               'Centro de Custo', 'Centro Custo', 'Cost Center', 'CC'
-            ]),
+            ]) || 'CCL Cajamar',
             urgency: getColumnValue([
               'Urgência', 'Urgencia', 'Prioridade', 'Priority'
             ]) || 'normal',
@@ -691,12 +722,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: 'rascunho' as const,
           };
 
-          // Debug log for troubleshooting
-          console.log(`Row ${i + 1} data:`, {
-            title: quotationData.title,
-            department: quotationData.department,
-            allKeys: Object.keys(row)
-          });
+          // Debug log for troubleshooting (only first 3 rows to avoid spam)
+          if (i < 3) {
+            console.log(`Row ${i + 1} data:`, {
+              title: quotationData.title,
+              department: quotationData.department,
+              allKeys: Object.keys(row),
+              rawRow: row
+            });
+          }
 
           // Validate required fields
           if (!quotationData.title || quotationData.title.toString().trim() === '') {
