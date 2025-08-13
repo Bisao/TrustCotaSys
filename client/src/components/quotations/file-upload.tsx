@@ -29,9 +29,14 @@ export function FileUploadSection() {
       return response.json();
     },
     onSuccess: (data) => {
+      const successMessage = `${data.created} requisições criadas`;
+      const warningMessage = data.skipped > 0 ? `, ${data.skipped} ignoradas` : '';
+      const errorMessage = data.errors.length > 0 ? `. Erros: ${data.errors.join('; ')}` : '';
+      
       toast({ 
-        title: "Planilha carregada com sucesso!", 
-        description: `${data.processed} itens processados` 
+        title: "Planilha processada!", 
+        description: `${successMessage}${warningMessage}${errorMessage}`,
+        variant: data.errors.length > 0 ? "destructive" : "default"
       });
       queryClient.invalidateQueries({ queryKey: ['/api/quotation-requests'] });
       setSelectedFile(null);
@@ -128,18 +133,20 @@ export function FileUploadSection() {
                 ou clique para selecionar
               </p>
             </div>
-            <Label htmlFor="file-upload">
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button variant="outline" className="cursor-pointer">
-                Selecionar Arquivo
-              </Button>
-            </Label>
+            <Input
+              id="file-upload"
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => document.getElementById('file-upload')?.click()}
+            >
+              Selecionar Arquivo
+            </Button>
           </div>
         </div>
 

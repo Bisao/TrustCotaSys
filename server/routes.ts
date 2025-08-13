@@ -9,8 +9,16 @@ import { insertSupplierSchema, insertProductSchema, insertCategorySchema, insert
 import { openaiService } from "./services/openai";
 import { emailService } from "./services/email";
 import { requireAdmin, requireApprover, requireQuotationProcessor, requireRequester, requireOwnershipOrRole } from "./middleware/rbac";
+import multer from "multer";
+import * as XLSX from "xlsx";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
+
   // Auth middleware
   await setupAuth(app);
 
@@ -627,15 +635,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // File upload routes
-  app.post('/api/upload/quotation-spreadsheet', isAuthenticated, requireRequester, async (req: any, res) => {
+  app.post('/api/upload/quotation-spreadsheet', isAuthenticated, requireRequester, upload.single('file'), async (req: any, res) => {
     try {
-      // In a real implementation, you would use multer or similar for file handling
-      // For now, we'll simulate the processing
-      const mockProcessedData = {
-        processed: 5,
-        created: 5,
-        skipped: 0,
-        errors: []
+      if (!req.file) {
+        return res.status(400).json({ message: "Nenhum arquivo enviado" });
+      }
+
+      const buffer = req.file.buffer;
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      let created = 0;
+      let skipped = 0;
+      const errors: string[] = [];
+
+      for (const row of jsonData) {
+        try {
+          const quotationData = {
+            title: (row as any)['Título da Requisição'] || (row as any)['titulo'] || (row as any)['Titulo'],
+            description: (row as any)['Descrição'] || (row as any)['descricao'] || (row as any)['Descricao'],
+            department: (row as any)['Departamento'] || (row as any)['departamento'],
+            costCenter: (row as any)['Centro de Custo'] || (row as any)['centro_custo'],
+            urgency: (row as any)['Urgência'] || (row as any)['urgencia'] || 'normal',
+            totalBudget: (row as any)['Orçamento Estimado'] || (row as any)['orcamento'] || (row as any)['budget'],
+            requesterId: req.user.claims.sub,
+            status: 'rascunho' as const,
+          };
+
+          // Validate required fields
+          if (!quotationData.title) {
+            errors.push(`Linha ${created + skipped + 1}: Título é obrigatório`);
+            skipped++;
+            continue;
+          }
+
+          if (!quotationData.department) {
+            errors.push(`Linha ${created + skipped + 1}: Departamento é obrigatório`);
+            skipped++;
+            continue;
+          }
+
+          // Convert budget to proper format if provided
+          if (quotationData.totalBudget && typeof quotationData.totalBudget === 'string') {
+            const numericBudget = parseFloat(quotationData.totalBudget.replace(/[^\d.,]/g, '').replace(',', '.'));
+            quotationData.totalBudget = isNaN(numericBudget) ? undefined : numericBudget.toString();
+          }
+
+          // Create quotation request
+          await storage.createQuotationRequest(quotationData);
+          created++;
+          
+        } catch (error) {
+          console.error("Error processing row:", error);
+          errors.push(`Linha ${created + skipped + 1}: Erro ao processar dados`);
+          skipped++;
+        }
+      }
+
+      const processedData = {
+        processed: jsonData.length,
+        created,
+        skipped,
+        errors: errors.slice(0, 10) // Limit to 10 errors for display
       };
       
       // Create audit log
@@ -644,13 +706,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         action: 'upload',
         entityType: 'quotation_request',
         entityId: 'bulk_upload',
-        changes: { processed: mockProcessedData.processed },
+        changes: { 
+          filename: req.file.originalname,
+          processed: processedData.processed,
+          created: processedData.created,
+          skipped: processedData.skipped
+        },
       });
 
-      res.json(mockProcessedData);
+      res.json(processedData);
     } catch (error) {
       console.error("Error processing upload:", error);
-      res.status(500).json({ message: "Failed to process upload" });
+      res.status(500).json({ message: "Falha ao processar planilha" });
     }
   });
 
