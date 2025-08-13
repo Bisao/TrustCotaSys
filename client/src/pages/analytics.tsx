@@ -8,6 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
+interface DashboardStats {
+  monthlySpending?: number;
+  activeQuotations?: number;
+  savings?: number;
+  activeSuppliers?: number;
+  pendingApprovals?: number;
+}
+
 export default function Analytics() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,12 +35,12 @@ export default function Analytics() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: stats = {} } = useQuery({
+  const { data: stats = {} as DashboardStats } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
     enabled: isAuthenticated,
   });
 
-  const { data: insights = [] } = useQuery({
+  const { data: insights = [] as any[] } = useQuery<any[]>({
     queryKey: ["/api/dashboard/ai-insights"],
     enabled: isAuthenticated,
   });

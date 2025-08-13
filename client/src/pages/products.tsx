@@ -58,12 +58,12 @@ export default function Products() {
     },
   });
 
-  const { data: products = [], isLoading: isLoadingProducts } = useQuery({
+  const { data: products = [] as any[], isLoading: isLoadingProducts } = useQuery<any[]>({
     queryKey: ["/api/products"],
     enabled: isAuthenticated,
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] as any[] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
     enabled: isAuthenticated,
   });
@@ -101,13 +101,14 @@ export default function Products() {
     },
   });
 
-  const filteredProducts = products?.filter((product: any) =>
+  const filteredProducts = Array.isArray(products) ? products.filter((product: any) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  ) : [];
 
   const getCategoryName = (categoryId: string) => {
-    const category = categories?.find((cat: any) => cat.id === categoryId);
+    if (!Array.isArray(categories)) return "Sem categoria";
+    const category = categories.find((cat: any) => cat.id === categoryId);
     return category?.name || "Sem categoria";
   };
 
@@ -216,7 +217,7 @@ export default function Products() {
                         <FormItem>
                           <FormLabel>Descrição</FormLabel>
                           <FormControl>
-                            <Textarea {...field} />
+                            <Textarea {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -229,14 +230,14 @@ export default function Products() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Categoria</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione uma categoria" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {categories?.map((category: any) => (
+                              {Array.isArray(categories) && categories.map((category: any) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {category.name}
                                 </SelectItem>
