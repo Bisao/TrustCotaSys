@@ -7,7 +7,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-surface dark:bg-surface flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-background dark:bg-background flex flex-col items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">

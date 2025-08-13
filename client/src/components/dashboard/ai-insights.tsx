@@ -2,8 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+interface DashboardInsight {
+  type: string;
+  title: string;
+  description: string;
+  priority?: string;
+  actionable?: boolean;
+}
+
 export default function AiInsights() {
-  const { data: insights = [], isLoading } = useQuery({
+  const { data: insights = [], isLoading } = useQuery<DashboardInsight[]>({
     queryKey: ["/api/dashboard/ai-insights"],
   });
 
@@ -83,7 +91,7 @@ export default function AiInsights() {
     }
   ];
 
-  const displayInsights = insights && insights.length > 0 ? insights : defaultInsights;
+  const displayInsights = Array.isArray(insights) && insights.length > 0 ? insights : defaultInsights;
 
   return (
     <Card className="bg-white rounded-lg shadow-sm border border-gray-100">
@@ -99,7 +107,7 @@ export default function AiInsights() {
         </div>
       </CardHeader>
       <CardContent className="p-6 space-y-4">
-        {displayInsights.map((insight: any, index: number) => (
+        {displayInsights.map((insight: DashboardInsight, index: number) => (
           <div key={index} className={`flex items-start space-x-3 p-3 rounded-lg ${getInsightColor(insight.type)}`}>
             <span className={`material-icons text-sm mt-0.5`}>
               {getInsightIcon(insight.type)}

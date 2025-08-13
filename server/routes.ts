@@ -613,8 +613,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Audit log routes (Admin only)
-  app.get('/api/audit-logs', isAuthenticated, requireAdmin, async (req, res) => {
+  // Audit log routes (Admin and Approvers can view audit logs)
+  app.get('/api/audit-logs', isAuthenticated, requireApprover, async (req, res) => {
     try {
       const { entityId } = req.query;
       const logs = await storage.getAuditLogs(entityId as string);

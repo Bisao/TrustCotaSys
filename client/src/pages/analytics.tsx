@@ -39,7 +39,7 @@ export default function Analytics() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 bg-primary rounded-full animate-pulse mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando...</p>
@@ -53,7 +53,7 @@ export default function Analytics() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
+    <div className="flex h-screen overflow-hidden bg-background dark:bg-background">
       <Sidebar />
       
       <div className="flex-1 flex flex-col overflow-hidden">
