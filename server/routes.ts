@@ -650,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If we only have __EMPTY columns, try parsing without headers
       const hasOnlyEmptyColumns = jsonData.length > 0 && 
-        Object.keys(jsonData[0]).every(key => key.includes('__EMPTY') || key.includes('Material de limpeza'));
+        Object.keys(jsonData[0] as any).every(key => key.includes('__EMPTY') || key.includes('Material de limpeza'));
       
       if (hasOnlyEmptyColumns) {
         console.log("Detected malformed spreadsheet, trying alternative parsing...");
@@ -674,7 +674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Log available columns for debugging
-      console.log("Available columns in spreadsheet:", jsonData.length > 0 ? Object.keys(jsonData[0]) : 'No data');
+      console.log("Available columns in spreadsheet:", jsonData.length > 0 ? Object.keys(jsonData[0] as any) : 'No data');
       console.log("First 3 rows sample:", jsonData.slice(0, 3));
 
       let created = 0;
@@ -700,9 +700,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               'título', 'titulo', 'Title', 'Nome', 'Descrição do Item', 'Item',
               // Handle cases where title might be in column key itself
               'Material de limpeza - CCL Cajamar'
-            ]) || (Object.keys(row).find(key => 
+            ]) || (Object.keys(row as any).find(key => 
               key.includes('Material de limpeza') && (row as any)[key] && (row as any)[key].toString().trim()
-            ) ? (row as any)[Object.keys(row).find(key => key.includes('Material de limpeza')) || ''] : undefined),
+            ) ? (row as any)[Object.keys(row as any).find(key => key.includes('Material de limpeza')) || ''] : undefined),
             description: getColumnValue([
               'Descrição', 'Descricao', 'Description', 'Detalhes', 'Observações', 'Quantidade'
             ]),
@@ -727,14 +727,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.log(`Row ${i + 1} data:`, {
               title: quotationData.title,
               department: quotationData.department,
-              allKeys: Object.keys(row),
+              allKeys: Object.keys(row as any),
               rawRow: row
             });
           }
 
+          // Skip header/metadata rows
+          const title = quotationData.title?.toString().trim() || '';
+          if (!title || title.includes('EMPRESA:') || title.includes('CONTATO:') || title.includes('TELEFONE:') || 
+              title.includes('EMAIL:') || title.includes('DATA:') || title.length < 3) {
+            skipped++;
+            continue;
+          }
+
           // Validate required fields
           if (!quotationData.title || quotationData.title.toString().trim() === '') {
-            errors.push(`Linha ${i + 2}: Título é obrigatório (colunas disponíveis: ${Object.keys(row).join(', ')})`);
+            errors.push(`Linha ${i + 2}: Título é obrigatório (colunas disponíveis: ${Object.keys(row as any).join(', ')})`);
             skipped++;
             continue;
           }
@@ -745,7 +753,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Convert budget to proper format if provided
           if (quotationData.totalBudget && typeof quotationData.totalBudget === 'string') {
             const numericBudget = parseFloat(quotationData.totalBudget.replace(/[^\d.,]/g, '').replace(',', '.'));
-            quotationData.totalBudget = isNaN(numericBudget) ? undefined : numericBudget.toString();
+            // Limit to reasonable budget range (max 99,999,999.99)
+            if (!isNaN(numericBudget) && numericBudget <= 99999999.99 && numericBudget > 0) {
+              quotationData.totalBudget = numericBudget.toString();
+            } else {
+              quotationData.totalBudget = undefined; // Invalid budget, set to undefined
+            }
           }
 
           // Create quotation request
